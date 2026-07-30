@@ -1,0 +1,126 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# pipeline.yml
+# GitHub Actions CI/CD workflow for the Tourism Wellness Package MLOps pipeline.
+#
+# Triggers
+# --------
+# - Automatically on every push to the `main` branch.
+# - Manually via the "Run workflow" button in the Actions tab.
+#
+# Jobs (run sequentially)
+# -----------------------
+# 1. register-dataset  : validate + summarise the dataset
+# 2. data-prep         : clean, impute, split → artifact (4 CSV files)
+# 3. model-training    : tune XGBoost, log MLflow, commit model.pkl to main
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Tourism Wellness Package — MLOps Pipeline
+
+on:
+  push:
+    branches:
+      - main          # automatically triggers on every push to main
+  workflow_dispatch:  # enables manual "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write     # required for the model-training job to git-push model.pkl
+
+jobs:
+
+  # ── Job 1: Data Registration ────────────────────────────────────────────────
+  register-dataset:
+    name: "1 · Data Registration"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pandas
+
+      - name: Run data-registration script
+        run: python tourism_project/model_building/data_register.py
+
+      - name: Upload registered dataset as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: registered-data
+          path: tourism_project/data/tourism.csv
+
+  # ── Job 2: Data Preparation ─────────────────────────────────────────────────
+  data-prep:
+    name: "2 · Data Preparation"
+    needs: register-dataset
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r tourism_project/requirements.txt
+
+      - name: Run data-preparation script
+        run: python tourism_project/model_building/prep.py
+
+      - name: Upload train/test splits as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-splits
+          path: |
+            Xtrain.csv
+            Xtest.csv
+            ytrain.csv
+            ytest.csv
+
+  # ── Job 3: Model Training ───────────────────────────────────────────────────
+  model-training:
+    name: "3 · Model Training & Registration"
+    needs: data-prep
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r tourism_project/requirements.txt
+
+      - name: Download train/test splits artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: data-splits
+
+      - name: Start MLflow tracking server (background)
+        run: |
+          nohup mlflow ui --host 0.0.0.0 --port 5000 &
+          sleep 5    # wait for server to initialise
+
+      - name: Train model and log to MLflow
+        run: python tourism_project/model_building/train.py
+
+      - name: Commit trained model back to main branch
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tourism_project/deployment/model.pkl
+          git commit -m "chore: update trained model [skip ci]" || echo "No changes to commit"
+          git push
+
+print("\n.github/workflows/pipeline.yml written successfully.")
