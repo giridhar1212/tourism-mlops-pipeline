@@ -29,7 +29,7 @@ RANDOM_SEED   = 42
 
 # ── Data loading ──────────────────────────────────────────────────────────────
 def load_splits():
-    
+
     X_train = pd.read_csv("Xtrain.csv")
     X_test  = pd.read_csv("Xtest.csv")
     y_train = pd.read_csv("ytrain.csv").squeeze()   # Series
@@ -39,7 +39,7 @@ def load_splits():
 
 # ── Preprocessing ─────────────────────────────────────────────────────────────
 def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
-  
+
     cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
     num_cols = X.select_dtypes(include=["float64", "int64"]).columns.tolist()
 
@@ -51,7 +51,7 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
 
 # ── Training & evaluation
 def train_and_evaluate():
-    
+
 
     # ── Set MLflow tracking URI and experiment
     mlflow.set_tracking_uri(MLFLOW_URI)
@@ -64,7 +64,7 @@ def train_and_evaluate():
     print(f"Test samples     : {X_test.shape[0]}")
     print(f"Feature columns  : {X_train.shape[1]}")
 
-    # ── Pipeline definition 
+    # ── Pipeline definition
     pipeline = Pipeline(steps=[
         ("preprocessor", preprocessor),
         ("classifier",   xgb.XGBClassifier(
@@ -122,7 +122,7 @@ def train_and_evaluate():
         f1   = f1_score       (y_test, y_pred)
         auc  = roc_auc_score  (y_test, y_proba)
 
-        # ── Log metrics to MLflow 
+        # ── Log metrics to MLflow
         mlflow.log_metric("accuracy",      acc)
         mlflow.log_metric("precision",     prec)
         mlflow.log_metric("recall",        rec)
@@ -133,7 +133,7 @@ def train_and_evaluate():
         # ── Log model artefact
         mlflow.sklearn.log_model(best_model, artifact_path="best_xgb_model")
 
-        # ── Console output 
+        # ── Console output
         sep = "=" * 60
         print(f"\n{sep}")
         print("  MODEL EVALUATION RESULTS")
@@ -163,7 +163,7 @@ def train_and_evaluate():
 
         print(f"\nMLflow run ID : {run.info.run_id}")
 
-    # ── Save best model 
+    # ── Save best model
     os.makedirs(os.path.dirname(MODEL_OUTPUT), exist_ok=True)
     joblib.dump(best_model, MODEL_OUTPUT)
     print(f"\n✓  Best model saved to: {MODEL_OUTPUT}")
