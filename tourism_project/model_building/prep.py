@@ -12,7 +12,7 @@ RANDOM_SEED = 42
 
 
 def load_and_clean(path: str) -> pd.DataFrame:
-   
+
     print(f"\nLoading dataset from: {path}")
     df = pd.read_csv(path)
     print(f"Raw shape  : {df.shape}")
@@ -54,7 +54,7 @@ def load_and_clean(path: str) -> pd.DataFrame:
 
 
 def split_and_save(df: pd.DataFrame) -> None:
-   
+
     X = df.drop(columns=[TARGET_COL])
     y = df[TARGET_COL]
 
