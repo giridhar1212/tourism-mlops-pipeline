@@ -18,6 +18,11 @@ def load_and_clean(path: str) -> pd.DataFrame:
     print(f"Raw shape  : {df.shape}")
 
     # ── Drop unnecessary columns ─────────────────────────────────────────────
+    unnamed_cols = [col for col in df.columns if col.startswith("Unnamed:")]
+    if unnamed_cols:
+        df.drop(columns=unnamed_cols, inplace=True)
+        print(f"Dropped unnamed index columns: {unnamed_cols}")
+    
     df.drop(columns=DROP_COLS, errors="ignore", inplace=True)
     print(f"Dropped    : {DROP_COLS}")
 
