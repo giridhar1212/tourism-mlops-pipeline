@@ -114,6 +114,15 @@ if st.button("🔍  Predict", use_container_width=True, type="primary"):
         "MonthlyIncome":            monthly_income,
     }])
 
+    st.write("Input dataframe columns:")
+    st.write(input_data.columns.tolist())
+
+    try:
+        st.write("Expected columns:")
+        st.write(model.feature_names_in_)
+    except Exception as e:
+        st.write(e)
+
     prediction  = model.predict(input_data)[0]
     probability = model.predict_proba(input_data)[0][1]
 
