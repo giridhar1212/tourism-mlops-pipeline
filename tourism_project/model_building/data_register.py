@@ -20,6 +20,9 @@ def validate_and_register(path: str) -> None:
     print(f"\nLoading dataset from: {path}")
     df = pd.read_csv(path)
 
+    df = pd.read_csv(file_path)
+    if "Unnamed: 0" in df.columns:
+          df = df.drop("Unnamed: 0", axis=1)
     # ── Column validation ────────────────────────────────────────────────────
     missing_cols = [col for col in EXPECTED_COLUMNS if col not in df.columns]
     if missing_cols:
