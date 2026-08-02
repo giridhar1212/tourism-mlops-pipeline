@@ -6,4 +6,3 @@ xgboost>=2.0.0
 mlflow>=3.0.0
 joblib>=1.3.0
 
-print("tourism_project/requirements.txt written successfully.")
