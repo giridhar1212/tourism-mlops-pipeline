@@ -93,9 +93,6 @@ st.divider()
 
 if st.button("🔍  Predict", use_container_width=True, type="primary"):
 
-    # Build a single-row DataFrame with the same column names the model saw
-    # during training (all 18 feature columns, excluding CustomerID and
-    # ProdTaken which were dropped / used as target).
     input_data = pd.DataFrame([{
         "Age":                      age,
         "TypeofContact":            type_of_contact,
